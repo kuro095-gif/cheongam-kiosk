@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>순천청암고 키오스크</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main id="home" class="screen home-screen">
+    <header class="home-header photo-surface">
+      <img class="hero-photo" data-photo-role="hero" alt="" hidden>
+      <span class="hero-badge"><span aria-hidden="true"></span> 순천청암고 학교 안내</span>
+      <div class="hero-copy">
+        <p class="eyebrow">WELCOME TO CHEONGAM</p>
+        <h1>반가워요,<br><strong>여기는 청암입니다.</strong></h1>
+        <p class="intro">함께 배우고, 함께 꿈꾸는 우리의 학교</p>
+      </div>
+    </header>
+    <div class="menu-heading"><h2>무엇을 도와드릴까요?</h2><p><span aria-hidden="true">✦</span> 메뉴를 터치해주세요</p></div>
+    <nav id="menuGrid" class="menu-grid" aria-label="학교 안내 메뉴"></nav>
+    <div id="configError" class="notice" hidden role="status">안내 정보를 업데이트하지 못했어요. 기본 메뉴를 표시하고 있습니다. <button id="retryConfig" class="text-button">다시 시도</button></div>
+    <footer class="home-footer">
+      <div class="footer-tools"><span>오늘도 청암에서, 즐거운 하루</span><button id="adminOpen" class="text-button">관리자</button></div>
+      <div class="brand footer-brand"><img class="school-logo" alt="순천청암고등학교" hidden><span id="schoolFooter" class="brand-fallback">순천청암고등학교</span></div>
+    </footer>
+  </main>
+
+  <section id="viewer" class="screen viewer-screen" hidden aria-label="선택한 메뉴">
+    <header class="viewer-header"><span class="viewer-wordmark">CHEONGAM</span><h2 id="viewerTitle"></h2></header>
+    <div id="frameHost" class="frame-host"></div>
+    <footer class="viewer-footer"><div class="viewer-actions"><button id="viewerHome" class="primary home-button">⌂ &nbsp; 메인 메뉴로</button><button id="viewerHelp" class="text-button">화면이 안 보이나요?</button></div><div class="brand viewer-brand"><img class="school-logo" alt="순천청암고등학교" hidden><span class="brand-fallback">순천청암고등학교</span></div></footer>
+  </section>
+
+  <section id="idle" class="screen idle-screen" hidden aria-label="학교 홍보 대기 화면" tabindex="0">
+    <div class="idle-fallback"><span>순천청암고등학교</span><strong>너의 꿈이<br>자라는 곳</strong></div>
+    <img id="idleImage" class="idle-image" alt="" hidden>
+    <div class="idle-caption"><span class="touch-mark" aria-hidden="true">◎</span><p id="idleMessage">화면을 터치하면 메뉴가 활성화됩니다</p></div>
+  </section>
+
+  <section id="admin" class="screen admin-screen" hidden aria-label="메뉴 관리">
+    <header class="admin-header"><div><p class="eyebrow">ADMIN</p><h1>메뉴 관리</h1></div><button id="adminClose" class="secondary">로그아웃</button></header>
+    <p class="admin-intro">이름과 주소를 수정하거나 메뉴 순서를 바꾼 뒤 저장해주세요.</p>
+    <div id="adminRows" class="admin-rows"></div>
+    <div class="admin-toolbar"><button id="addMenu" class="secondary">＋ 메뉴 추가</button><button id="reloadMenus" class="text-button">목록 다시 불러오기</button></div>
+    <p id="adminStatus" class="status" aria-live="polite"></p>
+    <footer class="admin-footer"><button id="previewIdle" class="secondary">대기 화면 미리보기</button><button id="saveMenus" class="primary">변경 사항 저장</button></footer>
+  </section>
+
+  <dialog id="loginDialog" class="modal">
+    <form id="loginForm"><h2>관리자 로그인</h2><p>관리자 비밀번호를 입력해주세요.</p><label for="adminPassword">비밀번호</label><input id="adminPassword" type="password" autocomplete="current-password" required maxlength="128"><p id="loginStatus" class="status" aria-live="polite"></p><div class="dialog-actions"><button id="loginCancel" type="button" class="secondary">취소</button><button id="loginSubmit" type="submit" class="primary">로그인</button></div></form>
+  </dialog>
+  <dialog id="continueDialog" class="modal">
+    <h2>계속 이용하시겠어요?</h2><p>잠시 후 학교 안내 대기 화면으로 돌아갑니다.</p><p id="continueCountdown" class="countdown" aria-live="off"></p>
+    <div class="dialog-actions"><button id="continueHome" class="secondary">메인 메뉴로</button><button id="continueYes" class="primary">계속 이용하기</button></div>
+  </dialog>
+  <dialog id="helpDialog" class="modal"><h2>화면이 보이지 않나요?</h2><p>연결이 늦거나 해당 페이지가 이 화면에서 열리지 않을 수 있어요.</p><div class="dialog-actions"><button id="helpClose" class="secondary">닫기</button><button id="reloadFrame" class="primary">다시 불러오기</button><button id="helpHome" class="secondary">메인 메뉴로</button></div></dialog>
+  <dialog id="confirmDialog" class="modal"><h2 id="confirmTitle">확인</h2><p id="confirmText"></p><div class="dialog-actions"><button id="confirmNo" class="secondary">취소</button><button id="confirmYes" class="primary">확인</button></div></dialog>
+  <div id="toast" class="toast" hidden role="status"></div>
+  <script src="./config.js"></script>
+  <script src="./defaults.js"></script>
+  <script src="./transport.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
