@@ -1,8 +1,9 @@
+// 청암 키오스크 v2.0.1: 첫 시트 응답 전에 예전 기본 주소를 실행하지 않습니다.
 (() => {
  'use strict';
  const $ = id => document.getElementById(id);
  const state = { screen: 'home', config: window.CHEONGAM_DEFAULT_CONFIG ? structuredClone(window.CHEONGAM_DEFAULT_CONFIG) : null, frame: null, menu: null, frameNonce: '', child: null, childOrigin: '', cooperative: false,
-   lastInput: Date.now(), session: null, editor: null, dirty: false, saving: false, idleGeneration: 0, slideIndex: 0, confirmDeadline: 0 };
+   lastInput: Date.now(), session: null, editor: null, dirty: false, saving: false, idleGeneration: 0, slideIndex: 0, confirmDeadline: 0, configReady: false };
  const media = new Map();
  let syncBusy = false, nextSync = 0, slideTimer = 0, toastTimer = 0, navigationBusy = false, logoKey = '', confirmResolver = null, exitResolver = null;
  let menuSignature = '', homePhotoGeneration = 0;
@@ -47,11 +48,12 @@
  function renderMenus() {
   const grid = $('menuGrid');
   const menus = state.config ? state.config.menus : [];
-  const signature = JSON.stringify({ ready: !!state.config, menus });
+  const signature = JSON.stringify({ ready: state.configReady, menus });
   if (signature === menuSignature) { renderHomePhotos(); return; }
   menuSignature = signature; grid.replaceChildren();
   menus.forEach((menu, index) => {
    const button = document.createElement('button'); button.className = 'menu-card photo-surface' + (index === 0 ? ' featured' : '');
+   button.disabled = !state.configReady;
    const kind = Object.hasOwn(iconPaths, menu.id) ? menu.id : 'website'; button.dataset.kind = kind;
    const detail = cardDetails[kind];
    const photo = document.createElement('img'); photo.className = 'menu-photo'; photo.alt = ''; photo.hidden = true; photo.dataset.photoRole = detail.photo;
@@ -130,10 +132,16 @@
  async function refreshConfig(force = false) {
   if (syncBusy || (!force && Date.now() < nextSync)) return;
   syncBusy = true;
+  if (!state.configReady) {
+   $('menuGrid').setAttribute('aria-busy', 'true');
+   $('configError').firstChild.textContent = '학교 안내를 불러오고 있어요. 잠시만 기다려주세요. ';
+   $('configError').hidden = false; $('retryConfig').hidden = true;
+  }
   try {
    const config = await rpc('getKioskConfig');
+   if (!config || !Array.isArray(config.menus) || !Array.isArray(config.slides)) throw new Error('학교 안내 데이터 형식을 확인해주세요.');
    const previousSlides = JSON.stringify(state.config?.slides || []);
-   state.config = config; $('configError').hidden = true;
+   state.config = config; state.configReady = true; $('configError').hidden = true;
    $('schoolFooter').textContent = config.schoolName; $('idleMessage').textContent = config.idleMessage;
    if (state.screen === 'home') renderMenus(); else renderHomePhotos();
    renderLogo();
@@ -143,13 +151,25 @@
    if (state.screen === 'idle' && previousSlides !== JSON.stringify(config.slides)) {
     state.idleGeneration++; state.slideIndex = 0; clearTimeout(slideTimer); $('idleImage').hidden = true; advanceSlide();
    }
-  } catch (error) { $('configError').hidden = false; }
-  finally { nextSync = Date.now() + (state.config?.refreshSeconds || 60) * 1000; syncBusy = false; }
+  } catch (error) {
+   $('configError').firstChild.textContent = state.configReady
+    ? '최신 안내 정보를 업데이트하지 못했어요. 마지막으로 확인한 메뉴를 표시하고 있습니다. '
+    : '학교 안내를 불러오지 못했어요. 다시 시도해주세요. ';
+   $('configError').hidden = false;
+  }
+  finally {
+   $('menuGrid').setAttribute('aria-busy', 'false'); $('retryConfig').hidden = false;
+   nextSync = Date.now() + (state.config?.refreshSeconds || 60) * 1000; syncBusy = false;
+  }
  }
  $('retryConfig').onclick = () => refreshConfig(true);
 
  async function openMenu(menu) {
   if (navigationBusy || state.screen !== 'home') return;
+  if (!state.configReady) { notice('학교 안내를 불러온 뒤 메뉴를 이용해주세요.'); return; }
+  // Resolve the current sheet entry at click time, even if this button was created earlier.
+  menu = state.config.menus.find(current => current.id === menu.id);
+  if (!menu) { notice('메뉴가 변경되었습니다. 목록을 다시 확인해주세요.'); renderMenus(); return; }
   let url; try { url = new URL(menu.url); if (url.protocol !== 'https:') throw Error(); } catch (_) { notice('메뉴 주소를 확인해주세요.'); return; }
   closeDialogs(); activity(); state.menu = menu; state.cooperative = false; state.child = null; state.childOrigin = ''; state.frameNonce = nonce();
   // Optional integration parameters for the known apps; no changes to the linked apps are made here.
